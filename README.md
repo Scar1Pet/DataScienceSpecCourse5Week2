@@ -1,8 +1,7 @@
 # Coursera: Data Science Specialization
 ## Course 5, Week 2, Peer Review Assignment 1
 
-This repo contains files and information to complete the requirements of this peer review assignment.  
-This repo contains 4 key files.  
+This repo contains data from 4 files to complete the requirements of this peer review assignment.  
 *Note: The only file you will probably need to review and evaluate my work is `activity.html`.* 
 
 1. `activity.html`  -- A HTML presentation of the R code, output, and analysis that fulfills the requirements of the assignment. This file was generated using the knitr package in RStudio (R version 3.4.0). 
