@@ -5,11 +5,11 @@ This repo contains data from 5 files to complete the requirements of this peer r
 *Note: The only file you will probably need to review and evaluate my work is `activity.html`.* 
 
 **IMPORTANT**  
-Please remember that Github can not properly convert the `activity.Rmd` to HTML. Unfortunately, Github does not appear able to load the `activity.html` file directly into your browser for easy viewing. The *easiest way* to view my report will be to follow this link to the github HTML preview webtool:  
+Please remember that Github can not properly convert the `activity.Rmd` to HTML. Unfortunately, Github does not appear able to load the `activity.html` file directly into your browser for easy viewing. The *easiest way* to view my report the way it was intended will be to follow this link to the github HTML preview webtool:  
 
 [http://htmlpreview.github.io/?https://github.com/Scar1Pet/DataScienceSpecCourse5Week2/blob/master/activity.html](http://htmlpreview.github.io/?https://github.com/Scar1Pet/DataScienceSpecCourse5Week2/blob/master/activity.html)  
 
-If that does not work, to view the report the way it was intended, please click the "Clone or download" green button, and save the contents of this repo to a .zip file. Open the activity.html file, and your web browser should then display the report correctly. 
+If that does not work, to view the report the way it was intended, please click the "Clone or download" green button, and save the contents of this repo to a .zip file. Open the `activity.html` file, and your web browser should then display the report correctly. 
 
 ### Repo Contents
 
