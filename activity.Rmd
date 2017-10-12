@@ -1,0 +1,204 @@
+---
+title: "Data Science Specialization"
+subtitle: "Course 5, Week 2, Peer Review Assignment 1"
+---
+
+*Peter Scarbrough*
+
+## Background
+The goal of this assignment is to conduct number of specified analyses and procedures on a given dataset and gain experience presenting the R code, analysis, and output using R markdown, markdown, and HTML (with knitr). 
+
+## Data
+Data are motion data from an anonymous individual that tracked total number of steps taken in 5 minute intervals over a period of two months. The dataset contains 3 variables:   
+
+* **steps** -- integer of steps taken over 5 minute interval (missing values = NA)   
+* **date** -- date of measurement collected in YYYY-MM-DD format  
+* **interval** -- 5 minute interval for the given day  
+ 
+Data were downloaded from ["https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"]("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip") on October 10, 2017 at 4:00 PM.  
+*See R code below for additional detail...*
+
+### Task 1: Produce code for reading in the dataset and/or processing the data
+
+Activity data are downloaded to the working directory, unzipped, and read as a .csv file.
+
+```{r task1a}
+url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+download.file(url, destfile="activity.zip")
+unzip("activity.zip")
+data <- read.csv("activity.csv")
+```
+
+The date variable was read-in as a factor, which is not ideal. The lubridate package is used process the data and convert the date variable to the 'Date' class.
+
+```{r task1b, warning=FALSE, message=FALSE}
+require(lubridate)
+data$date <- ymd(data$date)
+```
+
+### Task 2: Construct histogram of the total number of steps taken each day
+
+Using tapply, total steps are summed by the date (coerced to a factor). Missing values are removed. This produces a named vector object (dates as names) which can be directly used to directly in the hist function.  
+
+```{r task2}
+total.steps.by.day <- tapply(data$steps, 
+    data$date, 
+    sum, 
+    na.rm=T)
+hist(total.steps.by.day, 
+     main="Total Steps By Day", 
+     xlab="Steps")
+```
+
+### Task 3: Generate mean and median number of steps taken each day
+
+Again, tapply is used to summarize the steps variable data by date and missing values are removed. The data are organized into a data.frame object and printed to aid the presentation. Note: NaN (not a number) indicates days which had completely missing data, where no mean or median could be calulated.
+
+```{r task3}
+mean.steps.day <- tapply(data$steps, 
+    data$date, 
+    mean, 
+    na.rm=T)
+median.steps.day <- tapply(data$steps, 
+    data$date, 
+    median, 
+    na.rm=T)
+my.result <- data.frame(mean.steps = mean.steps.day, 
+    median.steps = median.steps.day)
+rownames(my.result) <- rownames(mean.steps.day)
+my.result
+```
+
+### Task 4: Construct time series plot of the average number of steps taken
+
+Again, missing data will be removed in this procedure. However, instead of tapply, aggregate is used to return a data.frame object. This is simply to make it easier to implement complete.cases, which will help remove days where the average can not be calculated. This is perhaps the easiest way to ensure a continuous line plot of the time series data can be constructed.
+
+```{r task4}
+mean.steps.by.day <- aggregate(data$steps, 
+    by=list(data$date), 
+    FUN=mean, 
+    na.rm=T)
+mean.steps.by.day <- mean.steps.by.day[complete.cases(mean.steps.by.day),]
+names(mean.steps.by.day) <- c("date", "mean.steps")
+with(mean.steps.by.day, 
+    plot(date, 
+    mean.steps, 
+    type="l", 
+    xlab="Date",
+    ylab="Steps", 
+    main="Average Steps per Day"))
+points(mean.steps.by.day$date, 
+    mean.steps.by.day$mean.steps, 
+    pch=16, cex=.5)
+```
+
+### Task 5: Find the 5-minute interval that, on average, contains the maximum number of steps
+
+Again, aggregate is used to summarize (taking the mean) of steps measurements, but this time by 5-minute interval instead of date. The maximum value of average steps by interval is found by calling the max function. This result is stored and then used to directly look up the interval in the data.frame. If maximum average number of steps had occured at more than one interval (which was unlikely) multiple intervals would have been stored in max.interval. In this case, only one interval is stored.
+
+```{r task5}
+steps.by.interval <- aggregate(data$steps, 
+    by=list(data$interval), 
+    FUN=sum, 
+    na.rm=T)
+names(steps.by.interval) <- c("interval","sum.steps")
+max.steps <- max(steps.by.interval$sum.steps)
+max.interval <- steps.by.interval[steps.by.interval$sum.steps==max.steps,1]
+max.interval
+```
+
+### Task 6: Code to describe and show a strategy for imputing missing data
+
+To first identify a strategy for missing data, the fraction of missing data was caluated.
+
+```{r task6a}
+fraction.missing <- mean(is.na(data$steps))
+fraction.missing
+```
+
+The amount of missing data (approximately 13%) is excessive. Typically, over 5% missing data is considered to be problematic and likely not random. Having no additional information on the nature of the missing data, I would normally advise against imputing missing data, in this case, and consider simply disregarding cases with missing data. However, for this assignment, we will consider a simple strategy to impute missing data. 
+
+An intuitive solution would be to use the average number of steps in a given day and use that value to impute the missing data for the rest of the day. However, this intuitive solution is problematic because some days are entirely missing data. If we expand our solution to consider the averages of weeks, however, we will find that no week had completely missing data. Thus, the average of a given week will be used to fill in the missing data, given the week to which the missing data belong.
+
+To extract week data from the date data, the week function (from the lubridate package) is used. The function, tapply, is then used to find the mean of steps for a given week, and again missing data is disregarded. Finally, a function is then used to replace the missing data with the average from the appropriate week, storing the result to the imputed.steps variable in the data.frame, data.
+
+
+```{r task6b}
+data$week <- factor(week(data$date))
+avg.steps.week <- tapply(data$steps, data$week, mean, na.rm=T)
+data$imputed.steps <- {
+    imputed.steps <- data$steps
+    for(i in seq_along(data$steps)){
+        step = data$steps[i]
+        if(is.na(step)){
+            week <-  data$week[i]
+            avg.steps <- avg.steps.week[as.character(week)]
+            imputed.steps[i] <- avg.steps
+        }
+        else(imputed.steps[i] <- step)
+    }
+    imputed.steps
+}
+```
+
+### Task 7: Construct histogram of the total number of steps taken each day after missing values are imputed
+
+The code run here is nearly identical to the code from Task 2, except the imputed.steps variable is used instead. By comparing the two histograms, one can observe how correction for missingness has change the distribution of the curve.
+
+```{r task7}
+total.steps.by.day <- tapply(data$imputed.steps, 
+    data$date, 
+    sum, 
+    na.rm=T)
+hist(total.steps.by.day, 
+    main="Total Steps By Day (Imputed Values)", 
+    xlab="Steps")
+```
+
+### Task 8: Construct panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+First, weekday/weekend categorical distinctions must be generated from the date variable. To do this, weekday labels are extracted from the date variable using the weekdays function (from the base R pacakge). A custom function is then used to categorize the day of the week as "Weekend" or "Weekday". The result is converted into a factor and stored in the day.type variable in the data.frame, data.
+
+```{r task8a}
+data$wkd <- weekdays(data$date)
+data$day.type <- {
+    day.type <- as.character()
+    for(i in seq_along(data$wkd)){
+        weekday <- data$wkd[i]
+        if(weekday %in% c("Saturday", "Sunday")){
+            day.type[i] <- "Weekend"
+        }
+        else{
+            day.type[i] <- "Weekday"
+        }
+    }
+    day.type <- factor(day.type)
+}
+```
+
+Following this, steps data are summarized by interval and day.type (Weekend vs Weekday) using the aggregate function. The result is stored as a data.frame, steps.time.
+
+```{r task8b}
+steps.time <- aggregate(data$steps,  
+    by=list(data$interval,data$day.type),
+    FUN=mean,
+    na.rm=T)
+names(steps.time) <- c("Interval", "Day.Type", "Avg.Steps")
+```
+
+Finally, ggplot2 is used to graph the results of the steps.time data.frame.
+
+```{r task8c, warning=FALSE, message=FALSE}
+require(ggplot2)
+g <- ggplot(steps.time, aes(Interval, Avg.Steps))
+g <- g + geom_line()
+g <- g + facet_grid(.~Day.Type)
+g <- g + labs(x="Interval", y="Average Steps")
+g <- g + ggtitle("Average Steps per Interval", subtitle="Weekend Vs Weekday")
+g
+```
+
+### Task 9: Provide all of the R code needed to reproduce the results 
+
+Please consult this github repo to find a single .R source code file which contains all of the described code in a more condesensed form.  
+*Thank you reading and reviewing my work!*
