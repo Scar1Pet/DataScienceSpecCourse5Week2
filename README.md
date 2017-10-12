@@ -3,7 +3,7 @@
 
 This repo contains files and information to complete the requirements of this peer review assignment.  
 This repo contains 4 key files.  
-*Note: The only file you will probably need to review to evaluate my work is 'activity.html.'* 
+*Note: The only file you will probably need to review to evaluate my work is `activity.html`.* 
 
 1. `activity.html`  -- A HTML presentation of the R code, output, and analysis that fulfills the requirements of the assignment. This file was generated using the knitr package in RStudio (R version 3.4.0). 
 
